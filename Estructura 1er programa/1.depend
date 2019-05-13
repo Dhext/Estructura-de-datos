@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1503287699 source:c:\users\hext\desktop\1\main.cpp
+	<ctime>
+	<cstdlib>
+	<iostream>
+

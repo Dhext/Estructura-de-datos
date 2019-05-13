@@ -1,0 +1,322 @@
+
+ This file is a collection of notes that were recorded during the
+ development stages of OPALsim: All details in this file are covered
+ in the users guide. The demo version of OPALsim has a signal limit
+ of 120 compared to 4000 for the full version. Apart from that it is
+ fully functional.
+
+ ------------------------------------------------------------------------
+
+		       OPALsim  DIGITAL LOGIC SIMULATOR
+                       ------------------------------
+
+      Features
+      --------
+     *  Twelve state, event driven, functional and timing analysis
+     *  15,000 gate capability with 4,000 unique signals
+     *  Behavioral, gate, and switch level digital simulation
+     *  Supports tri-state busses, PLDs and ROMs
+     *  Builds circuit macros directly from PAL JEDEC files
+     *  Automatic spike (glitch) and oscillation detection
+     *  Compatible with OrCAD and SCHEMA schematic capture programs
+     *  Can take input directly from an ASCII circuit file description
+     *  Allows for triggered and gated test vectors
+     *  Provides hardcopy output to HP LaserJet or EPSON dot matrix printers
+     *  Interactive waveform viewer with mouse support, for EGA/VGA
+        or Hercules screens
+
+
+      New Features for release 3
+      --------------------------
+     *  Simulation times can now extend to 1,000,000 steps
+     *  Transitional recording:
+        Only output transitions are logged creating smaller list file
+     *  Separate delay times for rise_delay and fall_delay allowed
+     *  Allows for gate level schematic entry using logic primitives
+     *  Reports loading for all outputs
+     *  Now supports PROTEL,SUPERCAD,TANGO, & PCAD netlists
+
+ ------------------------------------------------------------------------
+
+Combinational logic primitives are:
+      AND / NAND       RAND / RNAND      TAND / TNAND
+      OR  / NOR        ROR  / RNOR       TOR  / TNOR
+      XOR / XNOR       RXOR / RXNOR      TXOR / TXNOR
+      BUF / INV        RBUF / RINV       TBUF / TINV
+ 
+Each of these primitives may have as many inputs as required.
+Input lines may be extended with the plus character.
+
+Higher level logic primitives are:
+      DFF        ; 'D' type flip-flop
+      TFF        ; Toggle flip-flop
+      JKFF       ; JK flip-flop
+      MUX        ; Multiplexer
+      DLATCH     ; Transparent latch
+      ROM        ; Read only memory
+
+
+Comments follow a semicolon ; or $ character on a line.
+Syntax: $ [string]
+Action: Adds comments to files or commands.
+
+* (asterisk)   In the circuit file starts a parts macro.
+In the list file signifies an unknown logic level.
+
+Syntax: * U1 7400 etc       (circuit file)
+
+
++ (plus character) A plus character can be used to extend probe lines,
+macro lines, gate input lines.
+
+
+Bus structure
+ 
+Syntax: .BUS label node1 node2 ...
+ 
+A grouping of nodes for numerical display.  Graphically shown as a high
+and low signal with a numerical value superimposed in the specified
+base.  Values are computed in a left-to-right high-to-low binary
+weighted order, i.e. if N nodes are specified, the left-most node has
+the value 2**N.  The base is Hexadecimal.
+ 
+Values are displayed in a Graphic display when there is room for the number
+to be displayed between transitions on the bus.
+
+
+Circuit definition files are normally (but not necessarily) identified by the
+extension '.ckt'.  They contain the specifications for building a
+circuit.  Each logical line of the file contains a primitive name, a macro
+name, or one of the following keywords as its first word:
+All simulator commands start with a dot.
+ 
+     .BELL    :  enables the error bell
+     .LIB     :  controls which libraries will be searched for macros
+     .ECHO    :  echoes the netfile to the screen
+     .LIST    :  copies the netfile to the output list file
+     .LOADING :  counts the number of inputs connected to each output
+     .BUS     :  grouping of signals for a numeric display
+     .ROM     :  builds a rom up to 256 x 32
+     .PROBE   :  set of nodes, scales, or buses to be sampled and displayed
+     .TIME    :  sets the maximum simulation time
+     .INIT_HI :  set all starting values to high (normally unknown)
+     .INIT_LO :  set all starting values to low  (normally unknown)
+     .SCALE   :  sets the value of a time step
+     .END     :  keyword to mark the end of the circuit file
+
+
+Glitches:
+Whenever an input to a logic element changes state before the output
+has responded to the previous input change a glitch will be flagged
+and a marker placed on the signal trace at the appropriate time step.
+Only delayed logic elements can cause glitches.
+
+
+
+        Format of input file (fname[.CKT])
+        Nothing in input file is case sensitive.
+
+$       '$' means comment line and is ignored except as below.
+$       The first comment line in file will be the title line for the
+;       output file. A semicolon will end the input line. Everything
+;       after a semicolon is ignored and could also be comments.
+
+;       All blank lines are ignored.
+
+'.'     Commands to simulator.
+        ---------------------
+        Lines starting with a period are command lines.
+        (period must be at start of line).
+
+
+.LIB    filename[.LIB] [filename] [filename]
+        Selects the library file to be searched for any macros used later.
+        There can be up to 10 library files specified. With each library
+        file there will be another file (filename.DIR) in the same dir.
+        If the file .LIB is more up to date than the file.DIR the simulator
+        will remake the library directory file automatically. A disk
+        pathname can be included in the library filename, ie. D:\WORK\TTL
+        Multiple library names can go on the same line.
+
+.BELL   Turns on the error bell.  Note: Some errors found before this
+        switch may not sound the bell so this line should go near the
+        top of the circuit file.
+
+.ECHO   Tells the simulator to print the logic netlist to the screen.
+
+.LIST   Tells the simulator to write the logic netlist to the output file.
+        The simulator state output always goes to a file with the same
+        name as the circuit file with the extension .LST
+
+.BUS    BUS_NAME  sig15 sig14 .... sig0   (1 to 16 signals)
+        Allows grouping of signals into a common BUS which can be probed
+        as any other signal. Busses will be in HEX format.
+        Bus_name must not be used as an gate output or external.
+        Signals are grouped MSB first up to 16 max (FFFF).
+        Bus lines can be extended with the plus character. (+)
+
+.TIME   n0 n1   
+        n0 is the end time of the simulation.  max 32767 (simulator steps)
+        n1 is the step period for the simulation.
+        
+.SCALE  n.nnnE-nn  or n.nnn [base]  (base = ps, ns, us, ms )
+        The SCALE command set the real value of a simulator time step
+        for the DLview program readouts.
+        The number can be in exponential format or in decimal or with an
+        optional base argument.
+        It must range from 1 pico second to 1 second ie. 1e-12  to 1.00
+        e.g.
+        One of four time base mnemonics can be supplied. ps, ns, us, ms.
+        ie.  [ps] = 1e-12, [ns] = 1e-9, [us] = 1e-6, [ms] = 1e-3 .
+        e.g.
+        .scale 1.5 us
+        .scale 1.5e-6   (the same time step as above)
+
+.PROBE  SIGNAL_0 .... SIGNAL_n
+        The probe command tell the simulator which signals to
+        monitor. There must be at least one monitored signal or the
+        simulation will abort. There can be as many .PROBE lines
+        as needed up to a total of 128 monitored signals.
+        A period ('.') in the signal list leaves a blank signal line.
+        Probe lines can go anywhere in the file and the same signal(s)
+        can be monitored as often as required to help display. e.g. clks.
+        Probe lines can be extended with the plus character. (+)
+
+.LOADING      <no arguments>
+
+        ( lists all circuit outputs with the number of inputs connected )
+        Adds into the .LST file.
+
+
+.ROM    ( 256 * 16 )
+
+        The new rom command in the simulator, allows up to eight
+        address inputs, with up to 16 data signals and up to 256
+        locations containing 0-FFFF (HEX)
+
+Syntax:   
+
+.ROM [dly] / a7 a6 a5 a4 a3 a2 a1 a0 / d15 .... d0 / 0000 0001 0002
++ .... FFFF  (up to 256 entries)
+
+
+        There must be only three slashes in the rom. e.g. 
+        .rom [delay] / addr / data / contents
+
+        Slashes are not allowed in signal names in the rom.
+        Delay is optional. Address and data fields go MSB first.
+        Any missing addr or data assume zero. Contents are entered
+        sequentially starting with the lowest address. Missing contents
+        assume FFFF. The rom can continue over multiple lines.
+        There must be enough bits in the contents to cover all the
+        data signals. ie. 0-FFFF will cover 16 signals.
+
+        Rom example: ( 32 * 8 )
+
+        .rom 1 / a4 a3 a2 a1 a0 / d7 d6 d5 d4 d3 d2 d1 d0 / 
+        + 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f
+        + 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f
+
+        The binary pattern in the contents of the rom will drive the
+        data outputs of the rom. The address lines are inputs and the
+        data lines are outputs, similar to test vectors. The outputs of
+        the rom must not short to other logic outputs, but can connect
+        to a tri-state buffer (such as a 74244) if bussing is required.
+
+        Roms can be used as lookup tables or pattern generators.
+        If the ROM is used as a logical element that is driving other
+        logic inputs then the minimum delay for the part must be 1.
+
+
+
+.END    Ends the input file. (Optional)
+
+
+
+        Other special first position characters.
+        ----------------------------------------
+
+'*'     The asterisk is the start of a macro expansion.  See MACROS:
+'+'     The plus sign is a continuation of a macro input list. There
+'+'     can be as many more lines as needed up to a total of 64 inputs
+        per macro. There can be no other lines between the '*' and the '+'
+        Macros can only be defined in a library file.
+        Important: A macro can not be processed before the library
+        that the macro is defined in has been loaded with a .LIB command.
+        All libraries will be searched for the macro definition.
+
+
+        All other lines are tried to be interpreted as logic
+        primitives or CLK commands. See LOGIC: and CLK:
+        
+
+        Automatic Globals:  VCC & GND are automatically declared
+        as level one (1) and level zero (0). These signals should
+        not be driven by logic outputs. Also the dummy signal 'NC'
+        is reserved as a no connect signal, and cannot be used
+        except as a no connect signal.
+
+ 
+
+A macro or substitution block is a collection of components which form a more
+complex sub-circuit.  They are defined using the MACRO and EOM keywords
+and stored in a parts LIBRARY. Thereafter they can be used multiple times
+by referring to them by the macro name.  For example:
+
+        macro definition as follows :
+ 
+        .MACRO 7400 delay p1 p2 p3 p4 p5 p6 p7
+        + p8 p9 p10 p11 p12 p13 p14
+        p3  NAND delay p1 p2
+        p6  NAND delay p4 p5
+        p8  NAND delay p10 p9
+        p11 NAND delay p13 p12
+        .EOM
+ 
+Macros cannot be nested.  The formal node names in the macro
+definition are replaced by actual node names when the macro is used, e.g.
+ 
+        macro use :
+
+        * U1 7400 3 in1 in2 out1 nc nc nc gnd
+        + nc nc nc nc nc nc vcc
+
+        * U2 7400 3 in3 in4 out2      ; Note: missing pins will become NC
+
+There cannot be more tokens passed to a macro than the macro has
+place holders.
+
+
+
+The WIRE gate is automatically provided on tri-state or shorted outputs
+to allow connection of multiple 3-state outputs to a single output node.
+This is analogous to a real wire, where signals are multiplexed.
+However, unlike a real wire, the output value remains constant unless
+driven by a change on the inputs.  Due to leakage, a real wire
+would eventually float high,low or unknown. Warnings will be given only
+for non tri-state or non resistive outputs that are shorted.
+
+Mixed combinations of the same strength inputs will cause an UNKNOWN output
+on the wire gate. A combination of the same level of any strength will keep
+the same output as the input. Different strengths will fight as follows :
+Driving will win over resistive, resistive will win over high Z.
+The output of the 'wire' gate will take the strength of the strongest input.
+
+Wired 'OR' elements keep their own propagation delays and the 'wire' itself
+has zero delay.
+
+Default setting for the simulator.
+
+The simulator adopts certain default setting when the input arguments are
+missing.
+
+        start time for a test vector        = 0
+        step time for a test vector         = 5
+        end time for a clk test vector      = end of simulation
+        end time for a input test vector    = end of pattern
+        end time for a trigger test vector  = end of simulation
+        end time for the simulation run     = 100
+        edge for a triggered input          = positive
+
+
+
